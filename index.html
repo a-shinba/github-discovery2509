@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>体重管理ダッシュボード</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .current-date {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card.weight {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .card.sleep {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .card.average {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .card.comparison {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .card-title {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .card-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .card-unit {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .comparison-indicator {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .trend-arrow {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+
+        .trend-up {
+            color: #ff6b6b;
+        }
+
+        .trend-down {
+            color: #51cf66;
+        }
+
+        .trend-same {
+            color: #ffd43b;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .data-table th {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .data-table tr:hover {
+            background: #e9ecef;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin: 30px 0 15px 0;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>体重管理ダッシュボード</h1>
+            <div class="current-date" id="currentDate"></div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card weight">
+                <div class="card-title">現在の体重</div>
+                <div class="card-value" id="currentWeight">65.5</div>
+                <div class="card-unit">kg</div>
+            </div>
+
+            <div class="card sleep">
+                <div class="card-title">昨夜の睡眠時間</div>
+                <div class="card-value" id="sleepHours">7.5</div>
+                <div class="card-unit">時間</div>
+            </div>
+
+            <div class="card average">
+                <div class="card-title">2週間平均体重</div>
+                <div class="card-value" id="twoWeekAverage">66.2</div>
+                <div class="card-unit">kg</div>
+            </div>
+
+            <div class="card comparison">
+                <div class="card-title">前回2週間との比較</div>
+                <div class="card-value" id="comparisonValue">-0.8</div>
+                <div class="card-unit">kg</div>
+                <div class="comparison-indicator">
+                    <span class="trend-arrow trend-down" id="trendArrow">↓</span>
+                    <span id="trendText">改善</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">直近2週間の記録</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>日付</th>
+                    <th>体重 (kg)</th>
+                    <th>睡眠時間 (時間)</th>
+                </tr>
+            </thead>
+            <tbody id="dataTableBody">
+                <!-- データは JavaScript で生成 -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // 現在の日付を表示
+        function displayCurrentDate() {
+            const now = new Date();
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'long'
+            };
+            document.getElementById('currentDate').textContent = 
+                now.toLocaleDateString('ja-JP', options);
+        }
+
+        // 静的なサンプルデータ（2週間分）
+        function generateSampleData() {
+            const data = [];
+            const today = new Date();
+            
+            // 過去14日間のデータを生成
+            for (let i = 13; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                
+                // 体重データ（ランダムだが現実的な変動）
+                const baseWeight = 66.5;
+                const variation = (Math.random() - 0.5) * 2; // ±1kg の変動
+                const weight = Math.round((baseWeight + variation) * 10) / 10;
+                
+                // 睡眠時間データ
+                const baseSleep = 7.5;
+                const sleepVariation = (Math.random() - 0.5) * 2; // ±1時間の変動
+                const sleep = Math.max(5, Math.min(10, Math.round((baseSleep + sleepVariation) * 10) / 10));
+                
+                data.push({
+                    date: date,
+                    weight: weight,
+                    sleep: sleep
+                });
+            }
+            
+            return data;
+        }
+
+        // データテーブルを生成
+        function populateDataTable(data) {
+            const tableBody = document.getElementById('dataTableBody');
+            tableBody.innerHTML = '';
+            
+            data.reverse().forEach(entry => {
+                const row = document.createElement('tr');
+                const dateStr = entry.date.toLocaleDateString('ja-JP', {
+                    month: 'numeric',
+                    day: 'numeric'
+                });
+                
+                row.innerHTML = `
+                    <td>${dateStr}</td>
+                    <td>${entry.weight}</td>
+                    <td>${entry.sleep}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // 2週間平均を計算
+        function calculateTwoWeekAverage(data) {
+            const total = data.reduce((sum, entry) => sum + entry.weight, 0);
+            return Math.round((total / data.length) * 10) / 10;
+        }
+
+        // 前回2週間との比較を計算（静的データのシミュレーション）
+        function calculateComparison() {
+            // 現在の2週間平均
+            const currentAverage = 66.2;
+            // 前回の2週間平均（シミュレーション）
+            const previousAverage = 67.0;
+            
+            const difference = Math.round((currentAverage - previousAverage) * 10) / 10;
+            
+            return {
+                difference: difference,
+                trend: difference < 0 ? 'down' : difference > 0 ? 'up' : 'same'
+            };
+        }
+
+        // ダッシュボードを更新
+        function updateDashboard() {
+            const data = generateSampleData();
+            
+            // 現在の体重（最新のデータ）
+            const latestWeight = data[data.length - 1].weight;
+            document.getElementById('currentWeight').textContent = latestWeight;
+            
+            // 昨夜の睡眠時間（最新のデータ）
+            const latestSleep = data[data.length - 1].sleep;
+            document.getElementById('sleepHours').textContent = latestSleep;
+            
+            // 2週間平均
+            const average = calculateTwoWeekAverage(data);
+            document.getElementById('twoWeekAverage').textContent = average;
+            
+            // 前回との比較
+            const comparison = calculateComparison();
+            document.getElementById('comparisonValue').textContent = comparison.difference;
+            
+            const trendArrow = document.getElementById('trendArrow');
+            const trendText = document.getElementById('trendText');
+            
+            trendArrow.className = `trend-arrow trend-${comparison.trend}`;
+            
+            if (comparison.trend === 'down') {
+                trendArrow.textContent = '↓';
+                trendText.textContent = '改善';
+            } else if (comparison.trend === 'up') {
+                trendArrow.textContent = '↑';
+                trendText.textContent = '増加';
+            } else {
+                trendArrow.textContent = '→';
+                trendText.textContent = '変化なし';
+            }
+            
+            // データテーブルを更新
+            populateDataTable(data);
+        }
+
+        // ページ読み込み時に実行
+        document.addEventListener('DOMContentLoaded', function() {
+            displayCurrentDate();
+            updateDashboard();
+        });
+    </script>
+</body>
+</html>
